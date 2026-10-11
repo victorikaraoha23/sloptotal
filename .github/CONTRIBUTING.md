@@ -31,7 +31,7 @@ Adding new AI detection engines is the most impactful contribution. See [How to 
 git clone https://github.com/pablocaeg/sloptotal.git
 cd sloptotal
 python3.11 -m venv venv && source venv/bin/activate
-pip install -r requirements-dev.txt
+pip install -r app/requirements-dev.txt
 
 uvicorn app.main:app --port 8000 --reload
 ```

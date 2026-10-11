@@ -33,7 +33,7 @@ benchmarks/              speed and load scripts
 ## Commands
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r app/requirements-dev.txt
 pytest -q                                  # ~7 s, no downloads
 ruff check app tests scripts && ruff format --check app tests scripts
 uvicorn app.main:app --port 8000           # first run downloads ~2 GB of models

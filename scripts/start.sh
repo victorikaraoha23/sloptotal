@@ -39,7 +39,7 @@ fi
 # Install dependencies if needed
 if ! python -c "import fastapi" 2>/dev/null; then
     echo "  Installing dependencies..."
-    pip install -r requirements.txt
+    pip install -r app/requirements.txt
 fi
 
 exec python -m uvicorn app.main:app --host "$HOST" --port "$PORT"

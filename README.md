@@ -105,7 +105,7 @@ Requires **Python 3.10+** (macOS ships 3.9, which is too old).
 git clone https://github.com/pablocaeg/sloptotal.git
 cd sloptotal
 python3.11 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+pip install -r app/requirements.txt
 ./scripts/start.sh    # or: uvicorn app.main:app --port 8000
 ```
 

@@ -12,7 +12,7 @@ SlopTotal is licensed under the MIT License. Some dependencies have different li
 
 This means that if you distribute a combined work (e.g., a Docker image containing SlopTotal and all its dependencies), that combined distribution must comply with the GPL-3.0 terms for trafilatura.
 
-The SlopTotal source code itself remains MIT-licensed. When you install dependencies via `pip install -r requirements.txt`, you are downloading trafilatura separately under its own license.
+The SlopTotal source code itself remains MIT-licensed. When you install dependencies via `pip install -r app/requirements.txt`, you are downloading trafilatura separately under its own license.
 
 ## Apache-2.0 Dependencies
 
@@ -32,4 +32,4 @@ The SlopTotal source code itself remains MIT-licensed. When you install dependen
 - **textstat**: MIT
 - **httpx**: BSD-3-Clause
 
-For a complete list of dependencies, see `requirements.txt`.
+For a complete list of dependencies, see `app/requirements.txt`.
