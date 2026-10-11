@@ -55,7 +55,14 @@ export default function Dashboard() {
         if (err instanceof DOMException && err.name === "AbortError") return; // cancelled
         if (err instanceof ApiError) {
           setError(friendlyMessage(err));
-          if (err.status === 0 || err.status >= 500) setDownToast(true);
+          // Toast "backend down" only for real backend outages (unreachable or
+          // 5xx from OUR server). A 502 from /api/analyze or /api/quick-score
+          // means the *target site* refused the fetch — the backend is fine,
+          // so the inline message is enough. Toasting as well blames the
+          // detector for the target's bot wall.
+          if (err.status === 0 || (err.status >= 500 && err.status !== 502)) {
+            setDownToast(true);
+          }
         } else {
           setError("Something exploded. Even the engines are embarrassed.");
           setDownToast(true);
