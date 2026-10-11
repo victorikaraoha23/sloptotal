@@ -1,46 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Github, Loader2, Moon, Zap } from "lucide-react";
+import { Activity, Github, Loader2, MoonStar, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import { getHealth } from "@/lib/api";
+import { STATUS_LABELS } from "@/lib/copy";
 import type { HealthResponse } from "@/lib/types";
 
 type Status = "checking" | "online" | "degraded" | "offline";
 
 const STATUS_META: Record<
   Status,
-  { label: string; dot: string; text: string; ring: string; icon: typeof Activity }
+  { label: string; dot: string; text: string; icon: typeof Activity }
 > = {
-  checking: {
-    label: "Waking backend…",
-    dot: "bg-slate-400",
-    text: "text-slate-300",
-    ring: "border-white/10",
-    icon: Loader2,
-  },
-  online: {
-    label: "Backend online",
-    dot: "bg-slop-human",
-    text: "text-slop-human",
-    ring: "border-slop-human/40",
-    icon: Activity,
-  },
-  degraded: {
-    label: "Degraded",
-    dot: "bg-slop-suspicious",
-    text: "text-slop-suspicious",
-    ring: "border-slop-suspicious/40",
-    icon: Zap,
-  },
-  offline: {
-    label: "Backend napping",
-    dot: "bg-slop-ai",
-    text: "text-slop-ai",
-    ring: "border-slop-ai/40",
-    icon: Moon,
-  },
+  checking: { label: STATUS_LABELS.checking, dot: "bg-warn", text: "text-[#bbb]", icon: Loader2 },
+  online: { label: STATUS_LABELS.online, dot: "bg-clean", text: "text-clean", icon: Activity },
+  degraded: { label: STATUS_LABELS.degraded, dot: "bg-warn", text: "text-warn", icon: Zap },
+  offline: { label: STATUS_LABELS.offline, dot: "bg-slop", text: "text-slop", icon: MoonStar },
 };
 
 export default function Header() {
@@ -63,7 +40,6 @@ export default function Header() {
 
   useEffect(() => {
     ping();
-    // Poll gently so a cold-started Render is noticed without spamming it.
     const id = setInterval(ping, 60_000);
     return () => clearInterval(id);
   }, []);
@@ -72,45 +48,35 @@ export default function Header() {
   const StatusIcon = meta.icon;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/5 bg-void-950/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-40 border-b-[3px] border-stamp bg-ink">
+      <div className="mx-auto flex max-w-[820px] items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
         {/* Logo */}
-        <div className="flex items-center gap-2.5">
-          <div className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-neon-cyan to-neon-violet shadow-glow">
-            <Zap className="h-5 w-5 text-void-950" />
-          </div>
-          <div className="leading-none">
-            <div className="text-lg font-bold tracking-tight text-slate-100">
-              Slop<span className="text-neon-cyan">Total</span>
-            </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
-              23 engines · 0 mercy
-            </div>
-          </div>
-        </div>
+        <a href="/" className="flex items-baseline gap-0.5">
+          <span className="font-display text-[26px] italic leading-none text-white">Slop</span>
+          <span className="relative top-[-1px] font-mono text-[13px] font-medium uppercase tracking-[0.15em] text-stamp-muted">
+            Total
+          </span>
+        </a>
 
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          {/* Status badge */}
+        <div className="flex items-center gap-3 font-mono text-xs">
+          {/* Status pill */}
           <button
             onClick={ping}
             title={
               health
-                ? `${health.engines.loaded}/${health.engines.total} engines loaded`
+                ? STATUS_LABELS.enginesLoaded(health.engines.loaded, health.engines.total)
                 : "Check backend health"
             }
             className={cn(
-              "flex items-center gap-2 rounded-full border bg-void-900/60 px-3 py-1.5 text-xs font-medium transition hover:brightness-110",
-              meta.ring,
+              "flex items-center gap-2 rounded-full border border-white/15 px-2.5 py-1 font-normal transition hover:border-white/30",
               meta.text,
             )}
           >
-            <span className={cn("status-dot", meta.dot)} />
-            <StatusIcon
-              className={cn("h-3.5 w-3.5", status === "checking" && "animate-spin")}
-            />
+            <span className={cn("status-dot", meta.dot, status !== "online" && "animate-pulse")} />
+            <StatusIcon className={cn("h-3.5 w-3.5", status === "checking" && "animate-spin")} />
             <span className="hidden sm:inline">{meta.label}</span>
             {health && status === "online" && (
-              <span className="hidden font-mono text-[10px] text-slate-500 sm:inline">
+              <span className="hidden font-mono text-[11px] text-[#777] sm:inline">
                 {health.engines.loaded}/{health.engines.total}
               </span>
             )}
@@ -118,15 +84,15 @@ export default function Header() {
 
           {/* GitHub */}
           <motion.a
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.97 }}
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-full border border-white/10 bg-void-900/60 px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-neon-cyan/40 hover:text-neon-cyan"
+            className="flex items-center gap-1.5 text-[#999] transition hover:text-white"
           >
             <Github className="h-4 w-4" />
-            <span className="hidden sm:inline">Star on GitHub</span>
+            <span className="hidden sm:inline">GitHub</span>
           </motion.a>
         </div>
       </div>

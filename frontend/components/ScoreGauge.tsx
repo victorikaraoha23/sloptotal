@@ -4,23 +4,20 @@ import { motion } from "framer-motion";
 import { gaugeColor, normalizeScore } from "@/lib/verdict";
 
 /**
- * A circular gauge ring. `value` is a 0–100 AI-likelihood score. The arc sweeps
- * clockwise from the top and the colour shifts green → amber → red with the score.
+ * A circular gauge ring, styled like the report.html gauge: a neutral track and
+ * a coloured arc that sweeps 270°, with the score set in the editorial serif.
  */
 export default function ScoreGauge({
   value,
-  size = 240,
-  label = "AI Score",
+  size = 176,
 }: {
   value: number;
   size?: number;
-  label?: string;
 }) {
   const score = normalizeScore(value);
-  const stroke = 14;
-  const radius = (size - stroke) / 2;
+  const stroke = 10;
+  const radius = (size - stroke) / 2 - 6;
   const circumference = 2 * Math.PI * radius;
-  // We draw only the top 270° (three-quarter) for a speedometer feel.
   const sweep = 0.75;
   const arcLength = circumference * sweep;
   const offset = arcLength * (1 - score / 100);
@@ -36,30 +33,19 @@ export default function ScoreGauge({
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        className="-rotate-[225deg]"
+        className="-rotate-[90deg]"
+        aria-hidden="true"
       >
-        <defs>
-          <filter id="gauge-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Track */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(148,163,184,0.12)"
+          stroke="#cdc6b8"
           strokeWidth={stroke}
           strokeDasharray={`${arcLength} ${circumference}`}
           strokeLinecap="round"
         />
-        {/* Value arc */}
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -69,28 +55,24 @@ export default function ScoreGauge({
           strokeWidth={stroke}
           strokeDasharray={`${arcLength} ${circumference}`}
           strokeLinecap="round"
-          filter="url(#gauge-glow)"
           initial={{ strokeDashoffset: arcLength }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ type: "spring", stiffness: 60, damping: 18 }}
+          transition={{ type: "spring", stiffness: 55, damping: 16 }}
         />
       </svg>
 
-      {/* Center readout */}
-      <div className="absolute inset-0 grid place-items-center">
-        <div className="text-center">
-          <div
-            className="font-mono text-5xl font-bold tabular-nums"
-            style={{ color }}
-          >
-            {Math.round(score)}
-            <span className="text-2xl align-top">%</span>
-          </div>
-          <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
-            {label}
-          </div>
-        </div>
+      {/* Center readout — serif score, mono "/100" */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span
+          className="font-display text-[34px] italic leading-none transition-colors"
+          style={{ color }}
+        >
+          {Math.round(score)}
+        </span>
+        <span className="mt-0.5 font-mono text-xs font-light text-muted">/ 100</span>
       </div>
     </div>
   );
 }
+
+

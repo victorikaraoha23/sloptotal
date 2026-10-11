@@ -1,18 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ExternalLink, Loader2, Microscope } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { API_BASE } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import type { EngineMeta } from "@/lib/types";
 
+// Subtle type chips in the forensic palette.
 const TYPE_STYLE: Record<string, string> = {
-  neural: "text-neon-violet border-neon-violet/40 bg-neon-violet/10",
-  statistical: "text-neon-cyan border-neon-cyan/40 bg-neon-cyan/10",
-  linguistic: "text-neon-lime border-neon-lime/40 bg-neon-lime/10",
-  embedding: "text-neon-magenta border-neon-magenta/40 bg-neon-magenta/10",
-  classifier: "text-neon-amber border-neon-amber/40 bg-neon-amber/10",
+  neural: "text-stamp border-stamp-muted",
+  statistical: "text-warn border-[#e9cf95]",
+  linguistic: "text-clean border-[#a9d8b8]",
+  embedding: "text-dim border-rule",
+  classifier: "text-slate border-rule",
 };
 
 /**
@@ -39,7 +40,7 @@ export default function EngineCatalog() {
 
   if (error) {
     return (
-      <p className="rounded-xl border border-slop-ai/30 bg-slop-ai/5 px-4 py-3 text-sm text-slop-ai">
+      <p className="rounded border border-stamp-muted border-l-[3px] border-l-stamp bg-stamp-bg px-3.5 py-2.5 text-[13px] text-slop">
         {error}
       </p>
     );
@@ -47,7 +48,7 @@ export default function EngineCatalog() {
 
   if (!engines) {
     return (
-      <div className="flex items-center gap-2 px-2 py-8 text-sm text-slate-500">
+      <div className="flex items-center gap-2 px-1 py-8 text-sm font-light text-muted">
         <Loader2 className="h-4 w-4 animate-spin" /> Interrogating the engine rack…
       </div>
     );
@@ -59,62 +60,65 @@ export default function EngineCatalog() {
   }, {});
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Microscope className="h-4 w-4 text-neon-cyan" />
-        <h3 className="font-mono text-sm uppercase tracking-widest text-neon-cyan/80">
-          Detection Engine Roster
-        </h3>
-        <span className="ml-auto font-mono text-xs text-slate-500">
-          {engines.length} engines
+    <div>
+      <div className="mb-4 flex items-end justify-between border-b border-rule pb-3">
+        <div>
+          <h3 className="font-display text-xl font-normal text-ink">Detection Engines</h3>
+          <p className="mt-1 text-[13px] font-light text-dim">
+            Each engine uses a different methodology. Results are weighted and combined into a single forensic score.
+          </p>
+        </div>
+        <span className="shrink-0 font-mono text-xs tabular-nums text-dim">
+          {engines.length}
         </span>
       </div>
 
-      {Object.entries(byType).map(([type, list]) => (
-        <div key={type}>
-          <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
-            {type} · {list.length}
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((e, i) => (
-              <motion.div
-                key={e.key}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
-                className="group rounded-xl border border-white/5 bg-void-900/40 p-3 transition hover:border-white/15"
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold",
-                      TYPE_STYLE[e.engine_type] ?? "text-slate-400 border-white/10",
-                    )}
-                  >
-                    {e.code}
-                  </span>
-                  <span className="truncate text-sm font-medium text-slate-200">
-                    {e.name}
-                  </span>
-                  {e.url && (
-                    <a
-                      href={e.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-auto text-slate-600 transition hover:text-neon-cyan"
+      <div className="space-y-6">
+        {Object.entries(byType).map(([type, list]) => (
+          <div key={type}>
+            <p className="mb-2 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-dim">
+              {type} · {list.length}
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {list.map((e, i) => (
+                <motion.div
+                  key={e.key}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="group rounded border border-rule-light bg-cream p-3 transition hover:border-stamp-muted"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase",
+                        TYPE_STYLE[e.engine_type] ?? "text-dim border-rule",
+                      )}
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                </div>
-                <p className="mt-1.5 line-clamp-2 text-xs text-slate-500">
-                  {e.description}
-                </p>
-              </motion.div>
-            ))}
+                      {e.code}
+                    </span>
+                    <span className="truncate text-[13px] font-medium text-ink">{e.name}</span>
+                    {e.url && (
+                      <a
+                        href={e.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto text-muted transition group-hover:text-stamp"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
+                  <p className="mt-1.5 line-clamp-2 text-xs font-light leading-relaxed text-dim">
+                    {e.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
+

@@ -103,15 +103,15 @@ npm run typecheck   # tsc --noEmit
 
 ```
 app/
-  layout.tsx            metadata + dark shell (server component)
+  layout.tsx            metadata + fonts + paper shell (server component)
   page.tsx              hero + <Dashboard/> (server component)
-  globals.css           cyberpunk theme, glass panels, scanlines
+  globals.css           forensic theme tokens, paper grain, shared classes
 components/
   Dashboard.tsx         client orchestrator: tabs, scan state, cold-start, errors
-  Header.tsx            logo, live /health status badge, GitHub link
+  Header.tsx            ink masthead, live /health status pill, GitHub link
   ScanSection.tsx       tabbed input: text (counter + clipboard) / URL / file dropzone
-  ResultsDashboard.tsx  gauge, sarcastic verdict banner, stats, engine grid
-  ScoreGauge.tsx        animated SVG ring, green→amber→red
+  ResultsDashboard.tsx  gauge, stamped verdict, stat pills, engine grid
+  ScoreGauge.tsx        animated SVG ring, serif score, green→amber→red
   EngineBreakdown.tsx   per-engine accordion grouped by type
   EngineCatalog.tsx     "Inspect Engines" roster from /api/engines
   RenderColdStartAlert.tsx  cold-start banner + backend-down toast
@@ -119,6 +119,7 @@ lib/
   api.ts                resilient client (timeout, retry, 202 polling, cold-start hint)
   types.ts              TypeScript types mirroring the FastAPI schemas
   verdict.ts            score bands, colour interpolation, tier mapping
+  copy.ts               ALL user-facing copy (verdicts, jokes, labels, hints)
   cn.ts                 clsx + tailwind-merge helper
 ```
 
@@ -126,9 +127,18 @@ lib/
 
 ## Design language
 
-- **Cyberpunk terminal meets dark dashboard**: glassmorphism panels, neon accents,
-  an animated grid + scanline backdrop, glowing status indicators.
-- Motion via **Framer Motion** (layout tabs, gauge spring, accordion height).
-- Icons via **Lucide React**. No other UI framework; the UI stays dependency-light.
-- Fully responsive; keyboard-friendly; `prefers`-safe (respects reduced motion via
-  Framer's defaults).
+Ports the original `web/` UI's **"Forensic Lab / Evidence Board"** aesthetic so the
+two frontends read as one product:
+
+- **Warm paper canvas**, near-black **ink** masthead with a red bottom rule, and a
+  single **red "stamp"** accent for verdicts — deliberately calm and deadpan.
+- **Editorial type**: *Instrument Serif* for the logo, headlines and scores;
+  *Lexend* for body; *DM Mono* for codes, labels and metadata. All self-hosted via
+  `next/font` (no external requests).
+- Verdicts land as a rotated **rubber-stamp** headline; engine rows read like filed
+  evidence (code chip, name, verdict badge, score bar).
+- Motion via **Framer Motion** (stamp-in, layout tab underline, gauge spring,
+  accordion height). Icons via **Lucide React**; no other UI framework.
+- All the personality lives in **`lib/copy.ts`** — the visuals stay restrained while
+  the words heckle. Fully responsive and `prefers-reduced-motion` safe.
+

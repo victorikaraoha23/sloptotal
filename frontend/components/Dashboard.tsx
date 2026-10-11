@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Radar, ScanLine, Microscope } from "lucide-react";
+import { Radar, Microscope } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import Header from "@/components/Header";
 import ScanSection, { type ScanSpeed } from "@/components/ScanSection";
@@ -10,13 +10,14 @@ import EngineCatalog from "@/components/EngineCatalog";
 import { BackendDownToast } from "@/components/RenderColdStartAlert";
 import { analyze, extractDocument, quickScore, ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { BUTTONS, FOOTER } from "@/lib/copy";
 import type { ScanResult } from "@/lib/types";
 
 type Tab = "scan" | "engines";
 
 const TAB_ITEMS: Array<{ id: Tab; label: string; icon: typeof Radar }> = [
-  { id: "scan", label: "Scan", icon: ScanLine },
-  { id: "engines", label: "Inspect Engines", icon: Microscope },
+  { id: "scan", label: "Scan", icon: Radar },
+  { id: "engines", label: BUTTONS.inspect, icon: Microscope },
 ];
 
 export default function Dashboard() {
@@ -85,7 +86,7 @@ export default function Dashboard() {
       <div
         role="tablist"
         aria-label="Dashboard views"
-        className="inline-flex rounded-xl border border-white/10 bg-void-900/70 p-1"
+        className="relative mb-5 flex border-b border-rule"
       >
         {TAB_ITEMS.map((t) => {
           const active = tab === t.id;
@@ -97,19 +98,19 @@ export default function Dashboard() {
               aria-selected={active}
               onClick={() => setTab(t.id)}
               className={cn(
-                "relative flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition",
-                active ? "text-void-950" : "text-slate-400 hover:text-slate-200",
+                "relative flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors",
+                active ? "text-ink" : "text-muted hover:text-slate",
               )}
             >
+              <Icon className={cn("h-3.5 w-3.5", active ? "opacity-100" : "opacity-50")} />
+              {t.label}
               {active && (
                 <motion.span
                   layoutId="dash-tab"
-                  className="absolute inset-0 -z-0 rounded-lg bg-neon-cyan shadow-glow"
+                  className="absolute -bottom-px left-3 right-3 h-0.5 rounded-t bg-stamp"
                   transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 />
               )}
-              <Icon className="relative z-10 h-4 w-4" />
-              <span className="relative z-10">{t.label}</span>
             </button>
           );
         })}
@@ -143,7 +144,7 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="glass p-6 sm:p-8"
+            className="card p-6 sm:p-8"
           >
             <EngineCatalog />
           </motion.div>
@@ -152,12 +153,21 @@ export default function Dashboard() {
 
       <BackendDownToast
         visible={downToast}
-        message="The Render backend didn't answer. It may be asleep or out of memory — hit retry, or come back in a minute."
+        message="The detector didn't answer. It may be asleep, out of RAM, or ghosting us. Retry, or come back in a minute."
         onRetry={() => {
           setDownToast(false);
           setError(null);
         }}
       />
+
+      {/* Footer */}
+      <footer className="mt-12 border-t border-rule pt-6">
+        <p className="mx-auto max-w-xl text-center text-xs font-light leading-relaxed text-muted">
+          <span className="font-display text-sm italic text-dim">SlopTotal</span>
+          <span className="mx-2 text-rule">·</span>
+          {FOOTER}
+        </p>
+      </footer>
     </div>
   );
 }

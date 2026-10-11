@@ -6,14 +6,20 @@ import {
   FileText,
   Link2,
   Loader2,
-  ScanLine,
-  Trash2,
+  Radar,
   UploadCloud,
   Zap,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import RenderColdStartAlert from "@/components/RenderColdStartAlert";
 import { cn } from "@/lib/cn";
+import {
+  BUTTONS,
+  FILE_HINT,
+  LOADING_LINES,
+  PLACEHOLDER,
+  URL_HINT,
+} from "@/lib/copy";
 
 export type ScanMode = "text" | "url" | "file";
 export type ScanSpeed = "quick" | "full";
@@ -60,6 +66,19 @@ export default function ScanSection({
   const [fileName, setFileName] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Rotate a snarky status line while a scan runs.
+  const [loadingLine, setLoadingLine] = useState(LOADING_LINES[0]);
+  useEffect(() => {
+    if (!loading) return;
+    setLoadingLine(LOADING_LINES[0]);
+    let i = 0;
+    const id = setInterval(() => {
+      i = (i + 1) % LOADING_LINES.length;
+      setLoadingLine(LOADING_LINES[i]);
+    }, 2600);
+    return () => clearInterval(id);
+  }, [loading]);
 
   const chars = text.length;
   const words = countWords(text);
@@ -110,260 +129,248 @@ export default function ScanSection({
   }
 
   return (
-    <section className="glass relative overflow-hidden p-5 sm:p-7">
-      <AnimatePresence>
-        {loading && (
+    <section className="card overflow-hidden">
+      {/* A calm top progress bar while scanning. */}
+      {loading && (
+        <div className="absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden bg-rule-light">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
-          >
-            <div className="absolute inset-x-0 top-0 h-24 animate-scan bg-gradient-to-b from-neon-cyan/0 via-neon-cyan/10 to-neon-cyan/0" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        <div
-          role="tablist"
-          aria-label="Input type"
-          className="inline-flex rounded-xl border border-white/10 bg-void-900/70 p-1"
-        >
-          {TABS.map((tab) => {
-            const active = mode === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setMode(tab.id)}
-                className={cn(
-                  "relative flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition",
-                  active ? "text-void-950" : "text-slate-400 hover:text-slate-200",
-                )}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="scan-tab"
-                    className="absolute inset-0 -z-0 rounded-lg bg-neon-cyan shadow-glow"
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <Icon className="relative z-10 h-4 w-4" />
-                <span className="relative z-10">{tab.label}</span>
-              </button>
-            );
-          })}
+            className="h-full w-1/3 bg-stamp"
+            initial={{ x: "-100%" }}
+            animate={{ x: "300%" }}
+            transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+          />
         </div>
+      )}
 
-        <div className="ml-auto inline-flex items-center gap-1 rounded-xl border border-white/10 bg-void-900/70 p-1 text-xs">
+      {/* Tabs — underline style, mirroring web/static */}
+      <div
+        role="tablist"
+        aria-label="Input type"
+        className="relative flex border-b border-rule bg-paper-warm px-1"
+      >
+        {TABS.map((tab) => {
+          const active = mode === tab.id;
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setMode(tab.id)}
+              className={cn(
+                "relative z-1 flex items-center gap-1.5 px-5 py-3 text-[13px] font-medium transition-colors",
+                active ? "text-ink" : "text-muted hover:text-slate",
+              )}
+            >
+              <Icon className={cn("h-3.5 w-3.5", active ? "opacity-100" : "opacity-50")} />
+              {tab.label}
+              {active && (
+                <motion.span
+                  layoutId="scan-tab"
+                  className="absolute -bottom-px left-3 right-3 h-0.5 rounded-t bg-stamp"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                />
+              )}
+            </button>
+          );
+        })}
+
+        {/* Speed toggle, pinned right */}
+        <div className="ml-auto flex items-center gap-1 pr-2 text-[11px]">
           <button
             onClick={() => setSpeed("quick")}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono uppercase tracking-wide transition",
+              "flex items-center gap-1 rounded-sm px-2 py-1 font-mono uppercase tracking-wide transition",
               speed === "quick"
-                ? "bg-neon-lime/20 text-neon-lime"
-                : "text-slate-500 hover:text-slate-300",
+                ? "bg-stamp/10 text-stamp"
+                : "text-muted hover:text-slate",
             )}
             title="4 ML classifiers, ~300-500ms"
           >
-            <Zap className="h-3.5 w-3.5" /> Quick
+            <Zap className="h-3 w-3" /> Quick
           </button>
           <button
             onClick={() => setSpeed("full")}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono uppercase tracking-wide transition",
+              "flex items-center gap-1 rounded-sm px-2 py-1 font-mono uppercase tracking-wide transition",
               speed === "full"
-                ? "bg-neon-cyan/20 text-neon-cyan"
-                : "text-slate-500 hover:text-slate-300",
+                ? "bg-stamp/10 text-stamp"
+                : "text-muted hover:text-slate",
             )}
             title="All 23 engines, calibrated ensemble"
           >
-            <ScanLine className="h-3.5 w-3.5" /> Full
+            <Radar className="h-3 w-3" /> Full
           </button>
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {mode === "text" && (
-          <motion.div
-            key="text"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-          >
-            <div className="relative">
+      <div className="p-5 sm:p-6">
+        <AnimatePresence mode="wait">
+          {mode === "text" && (
+            <motion.div
+              key="text"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Paste text here before ChatGPT takes your job..."
+                placeholder={PLACEHOLDER}
                 spellCheck={false}
-                className="h-56 w-full resize-y rounded-xl border border-white/10 bg-void-950/70 p-4 font-mono text-sm leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-neon-cyan/50 focus:shadow-glow"
+                className="field min-h-[150px] resize-y font-body"
               />
-              <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/5" />
-            </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-              <span className="font-mono">
-                <span className={cn(chars < 50 && chars > 0 && "text-slop-ai")}>{chars}</span>{" "}
-                chars · {words} words
-              </span>
-              {tooShort && (
-                <span className="text-slop-ai">
-                  Need at least 50 characters. The engines get stage fright below that.
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <span className="font-mono text-xs tabular-nums text-muted">
+                  <span className={cn(chars < 50 && chars > 0 && "text-stamp")}>{chars}</span>{" "}
+                  chars · {words} words
                 </span>
-              )}
-              <button
-                onClick={pasteFromClipboard}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1 font-medium text-slate-400 transition hover:border-neon-cyan/40 hover:text-neon-cyan"
-              >
-                <ClipboardPaste className="h-3.5 w-3.5" /> Paste from Clipboard
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {mode === "url" && (
-          <motion.div
-            key="url"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-          >
-            <div className="relative">
-              <Link2 className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-600" />
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && canScanUrl && submit()}
-                placeholder="https://example.com/some-suspiciously-fluent-article"
-                spellCheck={false}
-                className="h-14 w-full rounded-xl border border-white/10 bg-void-950/70 pl-12 pr-4 font-mono text-sm text-slate-200 placeholder:text-slate-600 focus:border-neon-cyan/50 focus:shadow-glow"
-              />
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              We&apos;ll fetch the page and read its main prose. Public URLs only — we
-              refuse to poke your router.
-            </p>
-          </motion.div>
-        )}
-
-        {mode === "file" && (
-          <motion.div
-            key="file"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-          >
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragActive(true);
-              }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                handleFiles(e.dataTransfer.files);
-              }}
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "flex h-52 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition",
-                dragActive
-                  ? "border-neon-cyan bg-neon-cyan/5"
-                  : "border-white/15 bg-void-950/50 hover:border-neon-cyan/40",
-              )}
-            >
-              {extracting ? (
-                <Loader2 className="h-8 w-8 animate-spin text-neon-cyan" />
-              ) : (
-                <UploadCloud className="h-8 w-8 text-slate-500" />
-              )}
-              <div className="text-center">
-                <p className="text-sm font-medium text-slate-300">
-                  {extracting
-                    ? "Extracting text from your document..."
-                    : "Drop a file or click to upload"}
-                </p>
-                <p className="mt-1 font-mono text-xs text-slate-500">
-                  .txt · .md · .pdf · .docx (max 10 MB)
-                </p>
+                {tooShort && (
+                  <span className="font-mono text-xs text-stamp">
+                    Need at least 50 characters. The engines get stage fright below that.
+                  </span>
+                )}
+                <button
+                  onClick={pasteFromClipboard}
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-sm border border-dashed border-rule px-2.5 py-1 text-[13px] text-slate transition hover:border-stamp hover:text-stamp"
+                >
+                  <ClipboardPaste className="h-3.5 w-3.5" /> {BUTTONS.paste}
+                </button>
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPTED}
-                className="hidden"
-                onChange={(e) => handleFiles(e.target.files)}
-              />
-            </div>
-            {fileName && (
-              <p
+            </motion.div>
+          )}
+
+          {mode === "url" && (
+            <motion.div
+              key="url"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
+              <div className="relative">
+                <Link2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && canScanUrl && submit()}
+                  placeholder="https://example.com/article"
+                  spellCheck={false}
+                  autoComplete="off"
+                  className="field pl-10"
+                />
+              </div>
+              <p className="mt-2 text-xs font-light text-muted">{URL_HINT}</p>
+            </motion.div>
+          )}
+
+          {mode === "file" && (
+            <motion.div
+              key="file"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragActive(false);
+                  handleFiles(e.dataTransfer.files);
+                }}
+                onClick={() => fileInputRef.current?.click()}
                 className={cn(
-                  "mt-2 flex items-center gap-2 font-mono text-xs",
-                  fileName.includes("Unsupported") ? "text-slop-ai" : "text-neon-lime",
+                  "flex h-44 cursor-pointer flex-col items-center justify-center gap-2.5 rounded border border-dashed transition",
+                  dragActive
+                    ? "border-stamp bg-stamp/[0.04]"
+                    : "border-rule bg-white/40 hover:border-stamp",
                 )}
               >
-                <FileText className="h-3.5 w-3.5" /> {fileName}
-                {!fileName.includes("Unsupported") && " — text loaded into the editor above."}
-              </p>
-            )}
-          </motion.div>
+                {extracting ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-stamp" />
+                ) : (
+                  <UploadCloud className="h-6 w-6 text-muted" />
+                )}
+                <div className="text-center">
+                  <p className="text-[13px] font-medium text-slate">
+                    {extracting ? BUTTONS.extracting : BUTTONS.dropFile}
+                  </p>
+                  <p className="mt-0.5 font-mono text-xs text-muted">{FILE_HINT}</p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPTED}
+                  className="hidden"
+                  onChange={(e) => handleFiles(e.target.files)}
+                />
+              </div>
+              {fileName && (
+                <p
+                  className={cn(
+                    "mt-2 flex items-center gap-2 font-mono text-xs",
+                    fileName.includes("Unsupported") ? "text-stamp" : "text-clean",
+                  )}
+                >
+                  <FileText className="h-3.5 w-3.5" /> {fileName}
+                  {!fileName.includes("Unsupported") && " — text loaded into the editor above."}
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <RenderColdStartAlert visible={coldStart} className="mt-4" />
+
+        {error && (
+          <p className="mt-4 flex items-center gap-2 rounded border border-stamp-muted border-l-[3px] border-l-stamp bg-stamp-bg px-3.5 py-2.5 text-[13px] text-slop">
+            {error}
+          </p>
         )}
-      </AnimatePresence>
 
-      <RenderColdStartAlert visible={coldStart} className="mt-4" />
+        {/* Form bottom: primary action + clear */}
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <button onClick={submit} disabled={loading || (mode === "text" && !canScanText) || (mode === "url" && !canScanUrl)} className="btn-ink">
+            {loading ? (
+              <>
+                <span className="spinner" />
+                {loadingLine}
+              </>
+            ) : (
+              <>
+                {BUTTONS.scan}
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </>
+            )}
+          </button>
 
-      {error && (
-        <p className="mt-4 rounded-lg border border-slop-ai/40 bg-slop-ai/10 px-4 py-2.5 text-sm text-slop-ai">
-          {error}
-        </p>
-      )}
+          <button
+            onClick={() => {
+              setText("");
+              setUrl("");
+              setFileName(null);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }}
+            disabled={loading}
+            className="text-[13px] font-light text-muted transition hover:text-stamp disabled:opacity-40"
+          >
+            {BUTTONS.purge}
+          </button>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          onClick={submit}
-          disabled={
-            loading || (mode === "text" && !canScanText) || (mode === "url" && !canScanUrl)
-          }
-          className={cn(
-            "inline-flex items-center gap-2 rounded-xl px-6 py-3 font-semibold transition",
-            "bg-gradient-to-r from-neon-cyan to-neon-violet text-void-950 shadow-glow",
-            "hover:brightness-110 active:scale-[0.98]",
-            "disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:shadow-none",
-          )}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Sniffing the LLM on your text...</span>
-            </>
-          ) : (
-            <>
-              <ScanLine className="h-4 w-4" />
-              Scan for Slop
-            </>
-          )}
-        </button>
-
-        <button
-          onClick={() => {
-            setText("");
-            setUrl("");
-            setFileName(null);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-          }}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-3 font-medium text-slate-400 transition hover:border-slop-ai/40 hover:text-slop-ai disabled:opacity-40"
-        >
-          <Trash2 className="h-4 w-4" /> Purge Text
-        </button>
+          <span className="ml-auto hidden text-xs font-light text-muted sm:inline">
+            Free &amp; private. Every engine runs on this server; nothing is sent to third parties.
+          </span>
+        </div>
       </div>
     </section>
   );

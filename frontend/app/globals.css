@@ -3,101 +3,117 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
 body {
-  background-color: #05060a;
-  color: #e2e8f0;
+  background-color: #f5f0e8;
+  color: #3d3b37;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* The animated cyber grid + radial glow behind everything. */
+/* Warm ambient washes in the corners, like the original. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -2;
-  background-image: radial-gradient(
-      60% 50% at 50% 0%,
-      rgba(34, 211, 238, 0.12),
-      transparent 70%
-    ),
-    linear-gradient(to bottom, rgba(34, 211, 238, 0.05) 1px, transparent 1px),
-    linear-gradient(to right, rgba(34, 211, 238, 0.05) 1px, transparent 1px);
-  background-size: 100% 100%, 40px 40px, 40px 40px;
+  z-index: -1;
   pointer-events: none;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(181, 40, 46, 0.035) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(45, 138, 78, 0.035) 0%, transparent 50%);
 }
 
-/* Subtle scanline texture overlay for that terminal feel. */
+/* Fine paper grain via an inline SVG turbulence, same as web/static. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.015) 0px,
-    rgba(255, 255, 255, 0.015) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  z-index: 9998;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 @layer components {
-  /* Frosted glass panel used for cards, dashboards, dropzones. */
-  .glass {
-    @apply bg-void-850/60 backdrop-blur-xl border border-white/10 rounded-2xl;
+  /* Paper card with a hairline border and soft elevation. */
+  .card {
+    @apply rounded border border-rule bg-cream shadow-card;
   }
 
-  .glass-strong {
-    @apply bg-void-900/80 backdrop-blur-2xl border border-white/10 rounded-2xl;
+  /* A monospace uppercase micro-label. */
+  .label {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-dim;
   }
 
-  /* Terminal-style label above inputs. */
-  .field-label {
-    @apply text-xs font-mono uppercase tracking-widest text-neon-cyan/70;
+  /* A small metadata "pill". */
+  .pill {
+    @apply inline-flex items-center rounded-sm border border-rule-light bg-paper-warm px-2.5 py-1 font-mono text-[11px] text-dim;
   }
 
-  /* Small status dot that pulses. */
+  /* Primary ink button (hover → red stamp). */
+  .btn-ink {
+    @apply inline-flex items-center gap-2 rounded-sm border border-ink bg-ink px-6 py-3 text-sm font-medium text-white transition;
+  }
+  .btn-ink:hover {
+    @apply border-stamp bg-stamp shadow-stamp;
+    transform: translateY(-1px);
+  }
+  .btn-ink:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  .btn-ink:disabled {
+    @apply cursor-not-allowed opacity-50;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Ghost / secondary button. */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-sm border border-rule bg-cream px-4 py-2 text-[13px] font-medium text-slate transition;
+  }
+  .btn-ghost:hover {
+    @apply border-stamp-muted bg-white text-stamp;
+  }
+
+  /* Text inputs + textarea: white field, hairline border, red focus ring. */
+  .field {
+    @apply w-full rounded-sm border border-rule bg-white px-3.5 py-3 font-mono text-sm text-ink outline-none transition;
+  }
+  .field::placeholder {
+    @apply text-muted font-light;
+  }
+  .field:focus {
+    @apply border-stamp-muted;
+    box-shadow: 0 0 0 3px rgba(181, 40, 46, 0.08);
+  }
+
+  /* A small status dot. */
   .status-dot {
-    @apply relative inline-flex h-2.5 w-2.5 rounded-full;
-  }
-  .status-dot::after {
-    content: "";
-    @apply absolute inline-flex h-full w-full rounded-full opacity-75 animate-pulse-ring;
-    background: inherit;
+    @apply inline-block h-2 w-2 shrink-0 rounded-full;
   }
 }
 
-/* Custom scrollbar to match the theme. */
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-*::-webkit-scrollbar-track {
-  background: #0a0c14;
-}
-*::-webkit-scrollbar-thumb {
-  background: #1b2233;
-  border-radius: 9999px;
-  border: 2px solid #0a0c14;
-}
-*::-webkit-scrollbar-thumb:hover {
-  background: #273049;
-}
-
-/* Textarea / inputs: kill default focus ring, we draw our own glow. */
-textarea:focus,
-input:focus {
-  outline: none;
-}
-
+/* Selection matches the stamp accent. */
 ::selection {
-  background: rgba(34, 211, 238, 0.3);
-  color: #f8fafc;
+  background: rgba(181, 40, 46, 0.2);
+  color: #1a1a18;
 }
+
+/* Respect reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+
