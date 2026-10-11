@@ -48,6 +48,7 @@ function withTimeout(signal?: AbortSignal) {
   return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Core fetch wrapper: JSON, timeouts, cold-start hint, and friendly errors. */
 async function request<T>(
   path: string,
@@ -158,6 +159,21 @@ async function pollTicket(
     // Completed reports come back as the AnalysisReport itself.
     if (res && (res as AnalysisReport).engine_results) return res as AnalysisReport;
 
+    if (res && "status" in res) {
+      const status = res.status;
+      if (status === "rejected") {
+        // The job was rejected while we were waiting (capacity full).
+        // Surface like a 429 so the UI can offer a retry.
+        const rej = res as unknown as { error?: string; retry_after?: number };
+        throw new ApiError(rej.error ?? 'The queue is full. Try again shortly.', 429, rej.retry_after);
+      }
+      if (status === 'queued') {
+        await sleep(delay);
+        delay = Math.min(delay * 1.3, 4000);
+        continue;
+      }
+    }
+
     if (Date.now() > deadline) {
       throw new ApiError(
         "This one's stuck in the queue behind a sleepy Render. Try a shorter text.",
@@ -186,10 +202,16 @@ export async function analyze({ text, url, onSlow, signal }: AnalyzeArgs): Promi
   else if (text) body.text = text.trim();
   else throw new ApiError("Nothing to scan — paste some text first.", 400);
 
-  const first = await request<AnalysisReport | { status: string; ticket_id: string }>(
+  const first = await request<AnalysisReport | { status: string; ticket_id?: string }>(
     "/api/analyze",
     { method: "POST", body: JSON.stringify(body), onSlow, signal },
   );
+
+  if (first && "status" in first && first.status === "rejected") {
+    // The submit-posted job was rejected (capacity full) right away.
+    const rej = first as unknown as { error?: string; retry_after?: number };
+    throw new ApiError(rej.error ?? 'The queue is full. Try again shortly.', 429, rej.retry_after);
+  }
 
   if (first && (first as { ticket_id?: string }).ticket_id) {
     const report = await pollTicket((first as { ticket_id: string }).ticket_id, onSlow, signal);
