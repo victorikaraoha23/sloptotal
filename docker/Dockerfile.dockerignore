@@ -24,5 +24,8 @@ venv/
 *.db
 .DS_Store
 node_modules/
+# The Next.js dashboard deploys to Vercel on its own; it must never ship
+# inside the backend image.
+frontend
 app/requirements-dev.txt
 docker
