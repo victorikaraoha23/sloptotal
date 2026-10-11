@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Lexend, DM_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 // Display face — editorial serif with a true italic, used for headlines,
@@ -65,6 +66,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-paper font-body text-slate antialiased">
         {children}
+        <Analytics />
       </body>
     </html>
   );
